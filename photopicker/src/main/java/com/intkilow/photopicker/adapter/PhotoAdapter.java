@@ -32,11 +32,13 @@ import java.util.LinkedList;
 public class PhotoAdapter extends RecyclerView.Adapter {
 
     private LinkedList<PhotoEntity> mList;
-
+    private LinkedList<PhotoEntity> mSelectPhotoList = new LinkedList<>();
     private Context mContext;
     private float mW = 0;
     private int mMargin = DisplayUtil.dpToPx(2);
     private int color = Color.parseColor("#4C4C4C");
+
+    private int count = 0;
 
 
     public PhotoAdapter(LinkedList<PhotoEntity> list) {
@@ -53,18 +55,66 @@ public class PhotoAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder,final int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
 
+        PhotoEntity photoEntity = mList.get(position);
+        boolean select = false;
+        for (int i = 0; i < mSelectPhotoList.size(); i++) {
+            if(photoEntity.getFilePath() .equals(mSelectPhotoList.get(i).getFilePath())) {
+                photoEntity.setCount(i + 1);
+                select = true;
+                break;
+            }
+
+        }
+        photoEntity.setSelect(select);
         RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) viewHolder.image.getLayoutParams();
 
 //            layoutParams.width = (int) w;
         layoutParams.height = (int) mW;
         Glide.with(mContext)
-                .load(mList.get(position).getFilePath())
+                .load(photoEntity.getFilePath())
                 .placeholder(new ColorDrawable(color))
                 .error(new ColorDrawable(color))
                 .into(viewHolder.image);
+        viewHolder.image.setEnableSelect(photoEntity.isCanSelect());
+        viewHolder.image.setIsGIF(photoEntity.isiGif());
+        viewHolder.image.setIsVIDEO(photoEntity.isiGif());
+        if(photoEntity.getCount() == mSelectPhotoList.size()){
+            viewHolder.image.setSelect(select,photoEntity.getCount(),true);
+        }else{
+            viewHolder.image.setSelect(select,photoEntity.getCount(),false);
+        }
+
+
+        viewHolder.image.setImageClickCall( new ImageItem.ImageClickCall() {
+            @Override
+            public void onRectClick() {
+                boolean select = mList.get(position).isSelect();
+
+
+                if(!select){
+                    mSelectPhotoList.add(mList.get(position));
+                }else{
+                    mSelectPhotoList.remove(mList.get(position));
+                }
+
+
+
+
+//                mList.get(position).setCount(count);
+               // mList.get(position).setSelect(!select);
+//                notifyItemChanged(position);
+
+                  notifyDataSetChanged();
+            }
+
+            @Override
+            public void onImageClick() {
+
+            }
+        });
 
 
     }
@@ -82,4 +132,6 @@ public class PhotoAdapter extends RecyclerView.Adapter {
             image = itemView.findViewById(R.id.image);
         }
     }
+
+
 }

@@ -5,9 +5,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
@@ -23,7 +26,7 @@ import static java.lang.Math.sin;
 public class ImageItem extends AppCompatImageView {
 
 
-    private Paint mPathPaint = new Paint();
+
     private Paint mTextPaint = new Paint();
     private int mRadius = DisplayUtil.dpToPx(5);
     private boolean mIsSelect = false;//默认补选中
@@ -37,14 +40,34 @@ public class ImageItem extends AppCompatImageView {
     private Paint countPaint = new Paint();
     private Paint bgPaint = new Paint();
     private int mCount = 1;//当前数量
-    int paddingTop = DisplayUtil.dpToPx(8);//圆距离上边距
-    int paddingRight = DisplayUtil.dpToPx(8);//圆距离右边距
+    private String mTime = "00:40";//视频时间长度
+    int paddingTop = DisplayUtil.dpToPx(6);//圆距离上边距
+    int paddingRight = DisplayUtil.dpToPx(6);//圆距离右边距
     int radius = DisplayUtil.dpToPx(10);//圆半径
     int radiusW = DisplayUtil.dpToPx(1);//圆环宽度
 
     private int clickW = DisplayUtil.dpToPx(40);//点击区域大小
     private int scaleW = DisplayUtil.dpToPx(10);//圆圈缩放大小
+
+    private int mGIFPaddingLeft = DisplayUtil.dpToPx(6);
+    private int mGIFPaddingBottom = DisplayUtil.dpToPx(6);
+
     private boolean mEnableSelect = true;//是否可以选中
+    private boolean mIsGIF = false;//是不是gif
+    private boolean mIsVIDEO = false;//是不是video
+    private int mVideoRectW = DisplayUtil.dpToPx(15);
+    private int mVideoRectH = DisplayUtil.dpToPx(12);
+
+    private int mTraH = DisplayUtil.dpToPx(7);//梯形高度
+
+    private int mTraPaddingLeft = DisplayUtil.dpToPx(2);//梯形距离矩形左边距
+    private int mTraFixH = DisplayUtil.dpToPx(1);//梯形矩形padding
+
+    private int mTimePaddingLeft = DisplayUtil.dpToPx(5);
+
+    private Path mTraPath = new Path();
+    private Rect mMeasureRect = new Rect();
+
     /**
      * radiusArray[0] = leftTop;
      * radiusArray[1] = leftTop;
@@ -76,12 +99,11 @@ public class ImageItem extends AppCompatImageView {
 //        countPaint.setStrokeWidth(DisplayUtil.dpToPx(15));
         countPaint.setColor(Color.WHITE);
 
-        mPathPaint.setColor(Color.parseColor("#CC779BC8"));
+//        mPathPaint.setColor(Color.parseColor("#CC779BC8"));
         mTextPaint.setColor(Color.WHITE);
         mTextPaint.setTextSize(DisplayUtil.dpToPx(12));
 
         bgPaint.setARGB(30, 0, 0, 0);
-
 
         bgPaint.setAntiAlias(true);//抗锯齿
         paint.setAntiAlias(true);//抗锯齿
@@ -100,10 +122,10 @@ public class ImageItem extends AppCompatImageView {
 
                         if (mClickRect.left - mClickPoint.x < 0 && mClickRect.bottom - mClickPoint.y > 0) {
                             //点击右上角矩形
-                            if (null != mImageClickCall) {
+                            if (null != mImageClickCall && mEnableSelect) {
                                 mImageClickCall.onRectClick();
                             }
-                            setSelect(!mIsSelect);
+                            //setSelect(!mIsSelect);
                         } else {
                             //点击图片
                             if (null != mImageClickCall) {
@@ -122,9 +144,11 @@ public class ImageItem extends AppCompatImageView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        long start = System.currentTimeMillis();
 //        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
+
         canvas.drawARGB(30, 0, 0, 0);
-        canvas.drawARGB(10, 0, 0, 0);
         int cx = getWidth() - radius - paddingRight;
         int cy = radius + paddingTop;
         if (!mIsSelect) {
@@ -133,7 +157,7 @@ public class ImageItem extends AppCompatImageView {
             paint.setStyle(Paint.Style.STROKE);
             canvas.drawCircle(cx, cy, radius, bgPaint);
             canvas.drawCircle(cx, cy, radius, paint);
-
+            mTextPaint.setColor(Color.WHITE);
     /*
             //画对勾省略
             Path path = new Path();
@@ -142,8 +166,10 @@ public class ImageItem extends AppCompatImageView {
             path.lineTo(cx + rectW, cy - rectW);
             canvas.drawPath(path, paint);*/
         } else {
+            int color =Color.parseColor("#07C15C");
             //选中
-            paint.setColor(Color.parseColor("#07C15C"));
+            mTextPaint.setColor(color);
+            paint.setColor(color);
             paint.setStyle(Paint.Style.FILL);
             canvas.drawARGB(100, 0, 0, 0);//画选中蒙层黑色透明度
             canvas.drawCircle(cx, cy, radius - mOffset, paint);
@@ -168,36 +194,118 @@ public class ImageItem extends AppCompatImageView {
         }
 
 
+        if(mIsGIF){
+            canvas.drawText("GIF",mGIFPaddingLeft,getHeight() -mGIFPaddingBottom  ,mTextPaint);
+        }
+
+        if(mIsVIDEO){
+
+            canvas.drawRect(mGIFPaddingLeft,getHeight() - mGIFPaddingBottom -mVideoRectH,mGIFPaddingLeft+mVideoRectW,getHeight() - mGIFPaddingBottom,paint);
+
+            int x1[] = {mGIFPaddingLeft + mVideoRectW + mTraPaddingLeft,getHeight() - mGIFPaddingBottom - mVideoRectH/3*2};
+
+            int x2[] = {mGIFPaddingLeft + mVideoRectW + mTraPaddingLeft,getHeight() - mGIFPaddingBottom - mVideoRectH/3*1};
+
+            int x3[] = {mGIFPaddingLeft + mVideoRectW + mTraPaddingLeft + mTraH,getHeight() - mGIFPaddingBottom - mTraFixH};
+
+            int x4[] = {mGIFPaddingLeft + mVideoRectW + mTraPaddingLeft + mTraH,getHeight() - mGIFPaddingBottom - mVideoRectH + mTraFixH};
+
+            mTraPath.moveTo(x1[0],x1[1]);
+
+            mTraPath.lineTo(x2[0],x2[1]);
+            mTraPath.lineTo(x3[0],x3[1]);
+            mTraPath.lineTo(x4[0],x4[1]);
+            mTraPath.lineTo(x1[0],x1[1]);
+            canvas.drawPath(mTraPath,paint);
+
+
+
+            mTextPaint.getTextBounds(mTime,0,mTime.length(),mMeasureRect);
+
+
+            canvas.drawText(mTime,mGIFPaddingLeft + mVideoRectW + mTraPaddingLeft + mTraH + mTimePaddingLeft,getHeight() - mGIFPaddingBottom -(mVideoRectH - mMeasureRect.height())/2 ,mTextPaint);
+
+        }
+
+
+
+
+        Log.e("TAG","canvas time" + (System.currentTimeMillis() - start));
+
+
+
+
+
+
+
     }
 
+
+    public void setEnableSelect(boolean mEnableSelect) {
+        this.mEnableSelect = mEnableSelect;
+    }
+
+    public void setCount(int mCount) {
+        this.mCount = mCount;
+    }
+
+
+
+    public void setTime(String mTime) {
+        this.mTime = mTime;
+    }
+
+
+
+    public void setIsGIF(boolean mIsGIF) {
+        this.mIsGIF = mIsGIF;
+    }
+
+    public boolean ismIsVIDEO() {
+        return mIsVIDEO;
+    }
+
+    public void setIsVIDEO(boolean mIsVIDEO) {
+        this.mIsVIDEO = mIsVIDEO;
+    }
+
+    public void setSelect(boolean select,int count,boolean animation){
+        mCount = count;
+        setSelect(select,animation);
+    }
 
     /**
      * 设置选中
      *
      * @param select
      */
-    private void setSelect(boolean select) {
+    private void setSelect(boolean select,boolean animation) {
         if (!mEnableSelect) {
             return;
         }
 
         mIsSelect = select;
 
-        if (!mIsSelect) {
+        if (!mIsSelect ) {
             invalidate();
         } else {
-            ValueAnimator valueAnimator = ValueAnimator.ofFloat(1f);
-            valueAnimator.setInterpolator(new SpringScaleInterpolator());
-            valueAnimator.setDuration(800);
-            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    float f = (float) animation.getAnimatedValue();
-                    mOffset = scaleW - f * scaleW;
-                    invalidate();
-                }
-            });
-            valueAnimator.start();
+            if(animation){
+                ValueAnimator valueAnimator = ValueAnimator.ofFloat(1f);
+                valueAnimator.setInterpolator(new SpringScaleInterpolator());
+                valueAnimator.setDuration(800);
+                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        float f = (float) animation.getAnimatedValue();
+                        mOffset = scaleW - f * scaleW;
+                        invalidate();
+                    }
+                });
+                valueAnimator.start();
+            }else{
+                invalidate();
+            }
+
         }
     }
 
@@ -213,6 +321,11 @@ public class ImageItem extends AppCompatImageView {
         }
     }
 
+
+
+    public void setImageClickCall(ImageClickCall mImageClickCall) {
+        this.mImageClickCall = mImageClickCall;
+    }
 
     public interface ImageClickCall {
 
