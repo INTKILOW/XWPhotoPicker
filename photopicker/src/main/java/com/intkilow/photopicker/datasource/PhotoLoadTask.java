@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.entity.PhotoWrapperEntity;
@@ -65,13 +66,13 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                 MediaStore.Images.Media.MIME_TYPE + "=? or " +
                         MediaStore.Images.Media.MIME_TYPE + "=? or " +
                         MediaStore.Images.Media.MIME_TYPE + "=? or " +
-                        MediaStore.Images.Media.MIME_TYPE + "=?",
+                        MediaStore.Images.Media.MIME_TYPE + "=? ",
                 new String[]{"image/jpeg", "image/png", "image/jpg", "image/gif"},
                 MediaStore.Images.Media.DATE_ADDED + " DESC"
         )) {
-
             if (cursor == null || cursor.getCount() <= 0) {
                 //没有图片
+                return photoWrapperEntity;
             } else {
                 while (cursor.moveToNext()) {
 
@@ -94,6 +95,9 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                     photoEntity.setSize(size);
                     photoEntity.setFolder(folder);
                     photoEntity.setMimeType(mimeType);
+                    if (mimeType.equals("video/mp4")) {
+                        Log.e("TAG", "");
+                    }
                     if (mHashMapPic.containsKey(folder)) {
                         LinkedList<PhotoEntity> photoEntities = mHashMapPic.get(folder);
                         if (null != photoEntities) {

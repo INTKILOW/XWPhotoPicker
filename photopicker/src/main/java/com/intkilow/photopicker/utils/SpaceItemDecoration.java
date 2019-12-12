@@ -5,17 +5,7 @@ import android.view.View;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-/**
- * Copyright (C), 2015/6/12, 日照安泰科技发展有限公司
- * Author: flyzhang
- * Date: 2019/12/11 16:08
- * Description:
- * <p>
- * </p>
- * History:
- * <author>      <time>      <version>      <desc>
- * 作者姓名       修改时间     版本号         描述
- */
+
 public class SpaceItemDecoration extends RecyclerView.ItemDecoration {
 
     int margin = DisplayUtil.dpToPx(2);

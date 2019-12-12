@@ -7,12 +7,52 @@
     tools:context=".activity.PhotoPickerActivity">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:background="#333333"
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="0dp"
+        android:background="#333333"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:background="#4E4D4B"
+        android:layout_height="?android:attr/actionBarSize"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/preview"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:text="预览"
+            android:textColor="#7e7e7e"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/complete"
+            android:background="@drawable/complete_disable"
+            android:textColor="#fff"
+            android:text="@string/complete_name"
+            android:textSize="14sp"
+            android:layout_width="60dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

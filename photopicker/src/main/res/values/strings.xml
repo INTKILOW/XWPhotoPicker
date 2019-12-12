@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">photopicker</string>
+    <string name="complete">完成( %1$s )</string>
+    <string name="complete_name">完成</string>
 </resources>

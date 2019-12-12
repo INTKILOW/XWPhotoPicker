@@ -10,7 +10,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
@@ -67,7 +66,7 @@ public class ImageItem extends AppCompatImageView {
 
     private Path mTraPath = new Path();
     private Rect mMeasureRect = new Rect();
-
+    private int color = Color.parseColor("#07C15C");
     /**
      * radiusArray[0] = leftTop;
      * radiusArray[1] = leftTop;
@@ -122,8 +121,8 @@ public class ImageItem extends AppCompatImageView {
 
                         if (mClickRect.left - mClickPoint.x < 0 && mClickRect.bottom - mClickPoint.y > 0) {
                             //点击右上角矩形
-                            if (null != mImageClickCall && mEnableSelect) {
-                                mImageClickCall.onRectClick();
+                            if (null != mImageClickCall) {
+                                mImageClickCall.onRectClick(mEnableSelect);
                             }
                             //setSelect(!mIsSelect);
                         } else {
@@ -146,12 +145,11 @@ public class ImageItem extends AppCompatImageView {
         super.onDraw(canvas);
 
         long start = System.currentTimeMillis();
-//        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
 
         canvas.drawARGB(30, 0, 0, 0);
         int cx = getWidth() - radius - paddingRight;
         int cy = radius + paddingTop;
-        if (!mIsSelect) {
+        if (!mIsSelect || !mEnableSelect) {
             paint.setStrokeWidth(radiusW);
             paint.setColor(Color.WHITE);
             paint.setStyle(Paint.Style.STROKE);
@@ -166,7 +164,7 @@ public class ImageItem extends AppCompatImageView {
             path.lineTo(cx + rectW, cy - rectW);
             canvas.drawPath(path, paint);*/
         } else {
-            int color =Color.parseColor("#07C15C");
+
             //选中
             mTextPaint.setColor(color);
             paint.setColor(color);
@@ -180,16 +178,19 @@ public class ImageItem extends AppCompatImageView {
         }
 
 
-        mClickRect.left = getWidth() - clickW;
-        mClickRect.top = 0;
-        mClickRect.right = getWidth();
-        mClickRect.bottom = clickW;
+        if (mClickRect.bottom <= 0) {
+            mClickRect.left = getWidth() - clickW;
+            mClickRect.top = 0;
+            mClickRect.right = getWidth();
+            mClickRect.bottom = clickW;
+        }
+
 
 
         /**
          * 不能选中 并且 当前没有选中 画白色蒙层
          */
-        if (!mEnableSelect && !mIsSelect) {
+        if (!mEnableSelect) {
             canvas.drawARGB(160, 255, 255, 255);//不能选择的白色透明度
         }
 
@@ -198,7 +199,7 @@ public class ImageItem extends AppCompatImageView {
             canvas.drawText("GIF",mGIFPaddingLeft,getHeight() -mGIFPaddingBottom  ,mTextPaint);
         }
 
-        if(mIsVIDEO){
+        if (mIsVIDEO && !mIsGIF) {
 
             canvas.drawRect(mGIFPaddingLeft,getHeight() - mGIFPaddingBottom -mVideoRectH,mGIFPaddingLeft+mVideoRectW,getHeight() - mGIFPaddingBottom,paint);
 
@@ -329,7 +330,7 @@ public class ImageItem extends AppCompatImageView {
 
     public interface ImageClickCall {
 
-        void onRectClick();
+        void onRectClick(boolean enableClick);
 
         void onImageClick();
     }

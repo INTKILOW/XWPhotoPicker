@@ -16,30 +16,24 @@ import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.utils.DisplayUtil;
 import com.intkilow.photopicker.view.ImageItem;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
-/**
- * Copyright (C), 2015/6/12, 日照安泰科技发展有限公司
- * Author: flyzhang
- * Date: 2019/12/11 16:01
- * Description:
- * <p>
- * </p>
- * History:
- * <author>      <time>      <version>      <desc>
- * 作者姓名       修改时间     版本号         描述
- */
 public class PhotoAdapter extends RecyclerView.Adapter {
 
     private LinkedList<PhotoEntity> mList;
-    private LinkedList<PhotoEntity> mSelectPhotoList = new LinkedList<>();
     private Context mContext;
     private float mW = 0;
     private int mMargin = DisplayUtil.dpToPx(2);
     private int color = Color.parseColor("#4C4C4C");
+    private boolean canSelect = true;
 
-    private int count = 0;
+    private boolean isAddAction = false;
 
+    private HashMap<Integer, PhotoEntity> map = new LinkedHashMap<>();
+    private ItemClick itemClick;
 
     public PhotoAdapter(LinkedList<PhotoEntity> list) {
         mList = list;
@@ -55,68 +49,126 @@ public class PhotoAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder,final int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
+        RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) viewHolder.image.getLayoutParams();
+        layoutParams.height = (int) mW;
+
 
         PhotoEntity photoEntity = mList.get(position);
+
+//        int p = mSelectPhotoList.indexOf(photoEntity);
+//
+//        boolean select = p != -1;
+//
+//        p = p + 1;
+
         boolean select = false;
-        for (int i = 0; i < mSelectPhotoList.size(); i++) {
-            if(photoEntity.getFilePath() .equals(mSelectPhotoList.get(i).getFilePath())) {
-                photoEntity.setCount(i + 1);
-                select = true;
-                break;
+
+        int count = 1;
+        if (map.containsKey(position)) {
+            viewHolder.image.setEnableSelect(true);
+            select = true;
+            for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : map.entrySet()) {
+
+                if (integerPhotoEntityEntry.getKey() == position) {
+                    photoEntity = integerPhotoEntityEntry.getValue();
+                    break;
+                }
+                count++;
             }
-
+        } else {
+            viewHolder.image.setEnableSelect(canSelect);
         }
-        photoEntity.setSelect(select);
-        RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) viewHolder.image.getLayoutParams();
 
-//            layoutParams.width = (int) w;
-        layoutParams.height = (int) mW;
+
         Glide.with(mContext)
+                .asBitmap()
                 .load(photoEntity.getFilePath())
                 .placeholder(new ColorDrawable(color))
                 .error(new ColorDrawable(color))
+                .dontAnimate()
                 .into(viewHolder.image);
-        viewHolder.image.setEnableSelect(photoEntity.isCanSelect());
+
         viewHolder.image.setIsGIF(photoEntity.isiGif());
         viewHolder.image.setIsVIDEO(photoEntity.isiGif());
-        if(photoEntity.getCount() == mSelectPhotoList.size()){
-            viewHolder.image.setSelect(select,photoEntity.getCount(),true);
-        }else{
-            viewHolder.image.setSelect(select,photoEntity.getCount(),false);
-        }
+        viewHolder.image.setSelect(select, count, count == map.size() && isAddAction);
 
 
-        viewHolder.image.setImageClickCall( new ImageItem.ImageClickCall() {
+        viewHolder.image.setImageClickCall(new ImageItem.ImageClickCall() {
             @Override
-            public void onRectClick() {
-                boolean select = mList.get(position).isSelect();
+            public void onRectClick(boolean enable) {
+                if (!enable) {
+                    if (null != itemClick) {
+                        itemClick.onSelect(map.size(), false);
+                    }
+                    return;
+                }
+                PhotoEntity photoEntity = mList.get(position);
 
 
-                if(!select){
-                    mSelectPhotoList.add(mList.get(position));
-                }else{
-                    mSelectPhotoList.remove(mList.get(position));
+                if (!map.containsKey(position)) {
+                    isAddAction = true;
+                    map.put(position, photoEntity);
+
+                    if (map.size() >= 5) {
+                        canSelect = false;
+                        notifyDataSetChanged();
+                    } else {
+                        canSelect = true;
+                        notifyItemChanged(position);
+                    }
+
+                } else {
+                    isAddAction = false;
+                    canSelect = true;
+                    int k = 0;
+                    for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : map.entrySet()) {
+                        if (position == integerPhotoEntityEntry.getKey()) {
+                            break;
+                        }
+                        k++;
+                    }
+                    map.remove(position);
+                    if (map.size() + 1 >= 5) {
+                        notifyDataSetChanged();
+                    } else {
+                        int m = 0;
+                        for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : map.entrySet()) {
+                            int key = integerPhotoEntityEntry.getKey();
+                            if (m >= k) {
+                                notifyItemChanged(key);
+                            }
+                            m++;
+
+                        }
+                        notifyItemChanged(position);
+
+                    }
                 }
 
-
-
-
-//                mList.get(position).setCount(count);
-               // mList.get(position).setSelect(!select);
-//                notifyItemChanged(position);
-
-                  notifyDataSetChanged();
+                if (null != itemClick) {
+                    itemClick.onSelect(map.size(), true);
+                }
             }
 
             @Override
             public void onImageClick() {
-
+                if (null != itemClick) {
+                    itemClick.onImageClick(position);
+                }
             }
         });
 
 
+    }
+
+    public ItemClick getItemClick() {
+        return itemClick;
+    }
+
+    public void setItemClick(ItemClick itemClick) {
+        this.itemClick = itemClick;
     }
 
     @Override
@@ -131,6 +183,12 @@ public class PhotoAdapter extends RecyclerView.Adapter {
             super(itemView);
             image = itemView.findViewById(R.id.image);
         }
+    }
+
+    public interface ItemClick {
+        void onSelect(int count, boolean enable);
+
+        void onImageClick(int position);
     }
 
 

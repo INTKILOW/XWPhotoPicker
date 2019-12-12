@@ -35,6 +35,9 @@ public class PhotoEntity {
     }
 
     public void setMimeType(String mimeType) {
+        if (mimeType.equals("image/gif")) {
+            setiGif(true);
+        }
         this.mimeType = mimeType;
     }
 
