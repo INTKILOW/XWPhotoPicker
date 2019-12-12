@@ -1,5 +1,6 @@
 package com.intkilow.photopicker.activity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -23,6 +24,7 @@ import com.intkilow.photopicker.utils.DisplayUtil;
 import com.intkilow.photopicker.utils.StatusBarUtil;
 import com.intkilow.photopicker.view.CountView;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class PhotoPreviewActivity extends AppCompatActivity {
@@ -57,6 +59,13 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.view_pager);
         mComplete = findViewById(R.id.complete);
         countView = findViewById(R.id.countView);
+
+        findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
         countView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -226,5 +235,15 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             return view == object;
         }
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("selectData", (Serializable) mPhotoPreviewItemAdapter.getList());
+        intent.putExtra("bundle", bundle);
+        setResult(100, intent);
+        finish();
     }
 }
