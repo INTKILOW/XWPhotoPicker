@@ -1,2 +1,2 @@
-include ':app', ':photopicker'
+include ':app', ':photopicker', ':photoview'
 rootProject.name='XWPhotoPicker'

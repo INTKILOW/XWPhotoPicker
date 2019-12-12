@@ -1,8 +1,9 @@
 package com.intkilow.photopicker.activity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -14,10 +15,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.intkilow.photopicker.R;
 import com.intkilow.photopicker.adapter.PhotoAdapter;
 import com.intkilow.photopicker.datasource.PhotoLoadTask;
+import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.entity.PhotoWrapperEntity;
 import com.intkilow.photopicker.interfaces.Callback;
 import com.intkilow.photopicker.utils.DisplayUtil;
 import com.intkilow.photopicker.utils.SpaceItemDecoration;
+
+import java.util.LinkedList;
+import java.util.Map;
 
 public class PhotoPickerActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
@@ -31,6 +36,18 @@ public class PhotoPickerActivity extends AppCompatActivity {
         mRecyclerView = findViewById(R.id.recycler_view);
         mComplete = findViewById(R.id.complete);
         mPreview = findViewById(R.id.preview);
+        mPreview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (photoAdapter.getMap().size() > 0) {
+                    for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
+                        intent(integerPhotoEntityEntry.getKey());
+                        break;
+                    }
+                }
+
+            }
+        });
         ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mComplete.getLayoutParams();
         layoutParams.width = DisplayUtil.dpToPx(62);
         mComplete.setLayoutParams(layoutParams);
@@ -47,8 +64,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPostExecute(PhotoWrapperEntity result) {
-                Log.e("TAG", "");
+            public void onPostExecute(final PhotoWrapperEntity result) {
                 photoAdapter = new PhotoAdapter(result.getAllPic());
                 photoAdapter.setItemClick(new PhotoAdapter.ItemClick() {
                     @Override
@@ -61,7 +77,6 @@ public class PhotoPickerActivity extends AppCompatActivity {
                             mComplete.setBackgroundResource(R.drawable.complete_enable);
                             mPreview.setTextColor(Color.WHITE);
                             layoutParams.width = DisplayUtil.dpToPx(82);
-
                         } else {
                             mPreview.setTextColor(Color.parseColor("#7E7E7E"));
                             mComplete.setText(R.string.complete_name);
@@ -77,6 +92,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
                     @Override
                     public void onImageClick(int position) {
 
+                        intent(position);
                     }
                 });
                 mRecyclerView.setAdapter(photoAdapter);
@@ -89,5 +105,30 @@ public class PhotoPickerActivity extends AppCompatActivity {
             }
         });
         photoLoadTask.execute();
+    }
+
+
+    public void intent(int position) {
+        LinkedList<PhotoEntity> allPic = photoAdapter.getList();
+        Intent intent = new Intent(PhotoPickerActivity.this, PhotoPreviewActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("data", allPic);
+        LinkedList<PhotoEntity> selectPic = new LinkedList<>();
+        for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
+            Integer key = integerPhotoEntityEntry.getKey();
+            PhotoEntity value = integerPhotoEntityEntry.getValue();
+            value.setPosition(key);
+            if (position == key) {
+                value.setSelect(true);
+            } else {
+                value.setSelect(false);
+            }
+            selectPic.add(value);
+        }
+
+        bundle.putSerializable("selectData", selectPic);
+        intent.putExtra("bundle", bundle);
+        intent.putExtra("position", position);
+        startActivity(intent);
     }
 }

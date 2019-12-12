@@ -1,7 +1,9 @@
 package com.intkilow.photopicker.entity;
 
 
-public class PhotoEntity {
+import java.io.Serializable;
+
+public class PhotoEntity implements Serializable {
     private boolean isSelect = false;
     private boolean iGif = false;
     private boolean isVideo = false;
@@ -13,6 +15,8 @@ public class PhotoEntity {
     private long size;
     private String mimeType;
     private String folder;
+
+    private long position;
 
     public String getFilePath() {
         return filePath;
@@ -88,5 +92,13 @@ public class PhotoEntity {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public long getPosition() {
+        return position;
+    }
+
+    public void setPosition(long position) {
+        this.position = position;
     }
 }

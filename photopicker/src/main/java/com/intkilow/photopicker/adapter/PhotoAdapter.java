@@ -53,18 +53,9 @@ public class PhotoAdapter extends RecyclerView.Adapter {
         ViewHolder viewHolder = (ViewHolder) holder;
         RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) viewHolder.image.getLayoutParams();
         layoutParams.height = (int) mW;
-
-
         PhotoEntity photoEntity = mList.get(position);
 
-//        int p = mSelectPhotoList.indexOf(photoEntity);
-//
-//        boolean select = p != -1;
-//
-//        p = p + 1;
-
         boolean select = false;
-
         int count = 1;
         if (map.containsKey(position)) {
             viewHolder.image.setEnableSelect(true);
@@ -111,7 +102,7 @@ public class PhotoAdapter extends RecyclerView.Adapter {
                     isAddAction = true;
                     map.put(position, photoEntity);
 
-                    if (map.size() >= 5) {
+                    if (map.size() >= 9) {
                         canSelect = false;
                         notifyDataSetChanged();
                     } else {
@@ -161,6 +152,18 @@ public class PhotoAdapter extends RecyclerView.Adapter {
         });
 
 
+    }
+
+    public HashMap<Integer, PhotoEntity> getMap() {
+        return map;
+    }
+
+    public LinkedList<PhotoEntity> getList() {
+        return mList;
+    }
+
+    public void setList(LinkedList<PhotoEntity> mList) {
+        this.mList = mList;
     }
 
     public ItemClick getItemClick() {
