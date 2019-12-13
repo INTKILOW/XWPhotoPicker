@@ -29,6 +29,7 @@ public class PhotoAdapter extends RecyclerView.Adapter {
     private int mMargin = DisplayUtil.dpToPx(2);
     private int color = Color.parseColor("#4C4C4C");
     private boolean canSelect = true;
+    private int mMaxLen = 9;
 
     private boolean isAddAction = false;
 
@@ -121,7 +122,7 @@ public class PhotoAdapter extends RecyclerView.Adapter {
                         k++;
                     }
                     map.remove(position);
-                    if (map.size() + 1 >= 5) {
+                    if (map.size() + 1 >= 9) {
                         notifyDataSetChanged();
                     } else {
                         int m = 0;
@@ -152,6 +153,19 @@ public class PhotoAdapter extends RecyclerView.Adapter {
         });
 
 
+    }
+
+    public int getMaxLen() {
+        return mMaxLen;
+    }
+
+    public void setMaxLen(int mMaxLen) {
+        this.mMaxLen = mMaxLen;
+    }
+
+    public void setMap(HashMap<Integer, PhotoEntity> map) {
+        canSelect = map.size() < mMaxLen;
+        this.map = map;
     }
 
     public HashMap<Integer, PhotoEntity> getMap() {

@@ -21,8 +21,10 @@ import com.intkilow.photopicker.R;
 import com.intkilow.photopicker.adapter.PhotoPreviewItemAdapter;
 import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.utils.DisplayUtil;
+import com.intkilow.photopicker.utils.ObjectUtils;
 import com.intkilow.photopicker.utils.StatusBarUtil;
 import com.intkilow.photopicker.view.CountView;
+import com.intkilow.photopicker.view.HackyViewPager;
 
 import java.io.Serializable;
 import java.util.List;
@@ -39,13 +41,13 @@ public class PhotoPreviewActivity extends AppCompatActivity {
     private int mAllSize = 0;
 
     private CountView countView;
-    private ViewPager viewPager;
+    private HackyViewPager viewPager;
 
     private Button mComplete;
 
     private SamplePagerAdapter mSamplePagerAdapter;
 
-    private int mMaxSelect = 9;
+    private int mMaxLen = 9;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +82,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                     mPhotoPreviewItemAdapter.notifyItemRemoved(index);
                     countView.setSelect(false, 0, true);
                 } else {
-                    if (mMaxSelect > list.size()) {
+                    if (mMaxLen > list.size()) {
                         PhotoEntity photoEntity = mSamplePagerAdapter.getAllPic().get(viewPager.getCurrentItem());
                         photoEntity.setPosition(viewPager.getCurrentItem());
                         photoEntity.setSelect(true);
@@ -89,8 +91,12 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                         mPhotoPreviewItemAdapter.notifyItemInserted(list.size());
                         countView.setSelect(true, list.size(), true);
                     }
+                }
 
-
+                if (mPhotoPreviewItemAdapter.getList().size() > 0) {
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                } else {
+                    mRecyclerView.setVisibility(View.GONE);
                 }
 
                 setCompleteWH(mComplete, list.size());
@@ -104,8 +110,15 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         if (null != getIntent()) {
             Bundle bundle = getIntent().getBundleExtra("bundle");
             int position = getIntent().getIntExtra("position", 0);
+            mMaxLen = getIntent().getIntExtra("maxLen", 0);
             List<PhotoEntity> allPic = (List<PhotoEntity>) bundle.getSerializable("data");
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
+
+            if (!ObjectUtils.isEmpty(selectData)) {
+                mRecyclerView.setVisibility(View.VISIBLE);
+            } else {
+                mRecyclerView.setVisibility(View.GONE);
+            }
 
             setCompleteWH(mComplete, selectData.size());
             mAllSize = allPic.size();
@@ -218,8 +231,6 @@ public class PhotoPreviewActivity extends AppCompatActivity {
 //                    .error(new ColorDrawable(color))
                     .dontAnimate()
                     .into(photoView);
-//            photoView.setImageResource(allPic[position]);
-            // Now just add PhotoView to ViewPager and return it
             container.addView(photoView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
             return photoView;
