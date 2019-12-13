@@ -2,9 +2,18 @@ package com.intkilow.photopicker.activity;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -14,15 +23,19 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.intkilow.photopicker.R;
+import com.intkilow.photopicker.adapter.FolderPreviewAdapter;
 import com.intkilow.photopicker.adapter.PhotoAdapter;
 import com.intkilow.photopicker.datasource.PhotoLoadTask;
+import com.intkilow.photopicker.entity.FolderEntity;
 import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.entity.PhotoWrapperEntity;
 import com.intkilow.photopicker.interfaces.Callback;
 import com.intkilow.photopicker.utils.DisplayUtil;
+import com.intkilow.photopicker.utils.ObjectUtils;
 import com.intkilow.photopicker.utils.SpaceItemDecoration;
 import com.intkilow.photopicker.utils.StatusBarUtil;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -35,14 +48,24 @@ public class PhotoPickerActivity extends AppCompatActivity {
     private Button mComplete;
     private TextView mPreview;
     private int mMaxLen = 9;
+    PhotoWrapperEntity mResult;
+    private ConstraintLayout banner;
+    private LinearLayout chooseFolder;
+    private PopupWindow popupWindow;
+
+    private ImageView mDropImageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_picker);
-        StatusBarUtil.setColor(this, Color.parseColor("#4E4D4B"), 0);
+        StatusBarUtil.setColor(this, Color.parseColor("#333333"), 0);
         mRecyclerView = findViewById(R.id.recycler_view);
         mComplete = findViewById(R.id.complete);
+        chooseFolder = findViewById(R.id.choose_folder);
+        banner = findViewById(R.id.banner);
         mPreview = findViewById(R.id.preview);
+        mDropImageView = findViewById(R.id.drop_image_view);
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +76,19 @@ public class PhotoPickerActivity extends AppCompatActivity {
                     }
                 }
 
+            }
+        });
+        chooseFolder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                initPopWindow();
+            }
+        });
+
+        findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
             }
         });
         ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mComplete.getLayoutParams();
@@ -67,11 +103,11 @@ public class PhotoPickerActivity extends AppCompatActivity {
         photoLoadTask.setCallback(new Callback<PhotoWrapperEntity>() {
             @Override
             public void onPreExecute() {
-
             }
 
             @Override
             public void onPostExecute(final PhotoWrapperEntity result) {
+                mResult = result;
                 photoAdapter = new PhotoAdapter(result.getAllPic());
                 photoAdapter.setMaxLen(mMaxLen);
                 photoAdapter.setItemClick(new PhotoAdapter.ItemClick() {
@@ -156,7 +192,83 @@ public class PhotoPickerActivity extends AppCompatActivity {
             photoAdapter.notifyDataSetChanged();
 
         }
+    }
+
+
+    private void initPopWindow() {
+
+        if (null == popupWindow) {
+
+
+            popupWindow = new PopupWindow(this);
+            View inflate = LayoutInflater.from(this).inflate(R.layout.folder_choose, null);
+            RecyclerView viewById = inflate.findViewById(R.id.recyclerView);
+            List<FolderEntity> list = new LinkedList<>();
+
+            HashMap<String, LinkedList<PhotoEntity>> hashMapPic = mResult.getHashMapPic();
+
+
+            FolderEntity folderEntity = new FolderEntity();
+            folderEntity.setTitle("所有图片");
+            folderEntity.setCount(mResult.getAllPic().size());
+            folderEntity.setSelect(true);
+            folderEntity.setCover(mResult.getAllPic().get(0).getFilePath());
+            list.add(folderEntity);
+
+
+            for (Map.Entry<String, LinkedList<PhotoEntity>> stringLinkedListEntry : hashMapPic.entrySet()) {
+                LinkedList<PhotoEntity> value = stringLinkedListEntry.getValue();
+                String cover = "";
+                if (!ObjectUtils.isEmpty(value)) {
+                    cover = value.get(0).getFilePath();
+                }
+                folderEntity = new FolderEntity();
+                folderEntity.setTitle(stringLinkedListEntry.getKey().replace(File.separator, ""));
+                folderEntity.setCount(value.size());
+                folderEntity.setSelect(false);
+                folderEntity.setCover(cover);
+                list.add(folderEntity);
+            }
+
+            viewById.setAdapter(new FolderPreviewAdapter(list));
+
+            popupWindow.setContentView(inflate);
+            popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+            popupWindow.setAnimationStyle(R.style.popmenu_animation);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.setBackgroundDrawable(new BitmapDrawable());// 这样设置才能铺满屏幕，去掉这句话会出现缝隙
+            popupWindow.setFocusable(true);
+        }
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+
+                Animation rotateAnimation = new RotateAnimation(180, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                rotateAnimation.setFillAfter(true);
+                rotateAnimation.setDuration(300);
+                rotateAnimation.setRepeatCount(0);
+                rotateAnimation.setInterpolator(new LinearInterpolator());
+                mDropImageView.startAnimation(rotateAnimation);
+            }
+        });
+
+        if (popupWindow.isShowing()) {
+            popupWindow.dismiss();
+
+        } else {
+            Animation rotateAnimation = new RotateAnimation(0, 180, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            rotateAnimation.setFillAfter(true);
+            rotateAnimation.setDuration(300);
+            rotateAnimation.setRepeatCount(0);
+            rotateAnimation.setInterpolator(new LinearInterpolator());
+            mDropImageView.startAnimation(rotateAnimation);
+            popupWindow.showAsDropDown(banner);
+        }
 
 
     }
+
+
 }

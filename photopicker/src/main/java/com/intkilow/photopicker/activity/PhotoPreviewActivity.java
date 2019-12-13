@@ -55,7 +55,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_photo_preview);
 
-        StatusBarUtil.setColor(this, Color.parseColor("#4E4D4B"), 0);
+        StatusBarUtil.setColor(this, Color.parseColor("#333333"), 0);
         mRecyclerView = findViewById(R.id.recyclerView);
         mPreviewText = findViewById(R.id.previewText);
         viewPager = findViewById(R.id.view_pager);

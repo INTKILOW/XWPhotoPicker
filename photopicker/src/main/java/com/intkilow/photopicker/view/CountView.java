@@ -56,7 +56,7 @@ public class CountView extends AppCompatImageView {
         paint.setAntiAlias(true);
 
         bgPaint.setAntiAlias(true);
-        bgPaint.setColor(Color.parseColor("#4E4D4B"));
+        bgPaint.setColor(Color.parseColor("#333333"));
         countPaint.setAntiAlias(true);
         countPaint.setTextSize(DisplayUtil.dpToPx(15));
         countPaint.setAntiAlias(true);

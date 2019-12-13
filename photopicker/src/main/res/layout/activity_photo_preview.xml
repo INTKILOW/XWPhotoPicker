@@ -11,7 +11,7 @@
         android:id="@+id/constraintLayout2"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
-        android:background="#4E4D4B"
+        android:background="#333333"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -55,7 +55,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:background="#4E4D4B"
+        android:background="#333333"
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="84dp"
@@ -67,7 +67,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
-        android:background="#4E4D4B"
+        android:background="#333333"
         android:layout_height="?android:attr/actionBarSize"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

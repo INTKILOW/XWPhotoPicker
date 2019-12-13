@@ -117,7 +117,6 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
 
                 }
 
-
             }
 
 
