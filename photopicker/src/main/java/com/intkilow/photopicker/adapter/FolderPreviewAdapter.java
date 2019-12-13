@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -24,8 +25,8 @@ public class FolderPreviewAdapter extends RecyclerView.Adapter {
     private List<FolderEntity> mList;
     private Context mContext;
     private int color = Color.parseColor("#4C4C4C");
-
     private ItemClick mItemClick;
+    private int mLastPosition = 0;
 
     public FolderPreviewAdapter(List<FolderEntity> list) {
         mList = list;
@@ -51,6 +52,15 @@ public class FolderPreviewAdapter extends RecyclerView.Adapter {
                 .error(new ColorDrawable(color))
                 .dontAnimate()
                 .into(viewHolder.cover);
+        viewHolder.constraintLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (null != mItemClick) {
+                    mItemClick.onItemClick(position);
+                }
+
+            }
+        });
 
         if (folderEntity.isSelect()) {
             viewHolder.select.setVisibility(View.VISIBLE);
@@ -59,6 +69,16 @@ public class FolderPreviewAdapter extends RecyclerView.Adapter {
         }
         viewHolder.count.setText(String.valueOf(folderEntity.getCount()));
         viewHolder.title.setText(folderEntity.getTitle());
+    }
+
+    public void updateSelect(int p) {
+        if (p != mLastPosition) {
+            mList.get(mLastPosition).setSelect(false);
+            notifyItemChanged(mLastPosition);
+            notifyItemChanged(p);
+            mList.get(p).setSelect(true);
+            mLastPosition = p;
+        }
     }
 
 
@@ -85,7 +105,7 @@ public class FolderPreviewAdapter extends RecyclerView.Adapter {
 
     private class ViewHolder extends RecyclerView.ViewHolder {
         ImageView cover, select;
-
+        ConstraintLayout constraintLayout;
         TextView title, count;
 
         public ViewHolder(@NonNull View itemView) {
@@ -94,6 +114,7 @@ public class FolderPreviewAdapter extends RecyclerView.Adapter {
             select = itemView.findViewById(R.id.select);
             title = itemView.findViewById(R.id.title);
             count = itemView.findViewById(R.id.count);
+            constraintLayout = itemView.findViewById(R.id.layout);
         }
     }
 

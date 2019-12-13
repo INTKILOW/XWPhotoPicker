@@ -35,7 +35,6 @@ import com.intkilow.photopicker.utils.ObjectUtils;
 import com.intkilow.photopicker.utils.SpaceItemDecoration;
 import com.intkilow.photopicker.utils.StatusBarUtil;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -46,7 +45,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     PhotoAdapter photoAdapter;
     private Button mComplete;
-    private TextView mPreview;
+    private TextView mPreview, mTitle;
     private int mMaxLen = 9;
     PhotoWrapperEntity mResult;
     private ConstraintLayout banner;
@@ -65,13 +64,14 @@ public class PhotoPickerActivity extends AppCompatActivity {
         chooseFolder = findViewById(R.id.choose_folder);
         banner = findViewById(R.id.banner);
         mPreview = findViewById(R.id.preview);
+        mTitle = findViewById(R.id.title);
         mDropImageView = findViewById(R.id.drop_image_view);
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (photoAdapter.getMap().size() > 0) {
                     for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
-                        intent(integerPhotoEntityEntry.getKey());
+                        intent(-1);
                         break;
                     }
                 }
@@ -113,23 +113,8 @@ public class PhotoPickerActivity extends AppCompatActivity {
                 photoAdapter.setItemClick(new PhotoAdapter.ItemClick() {
                     @Override
                     public void onSelect(int count, boolean enable) {
-                        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mComplete.getLayoutParams();
-                        if (count > 0) {
-                            String tip = String.format(getResources().getString(R.string.complete), String.valueOf(count));
-                            mComplete.setText(tip);
-                            mComplete.setTextColor(Color.WHITE);
-                            mComplete.setBackgroundResource(R.drawable.complete_enable);
-                            mPreview.setTextColor(Color.WHITE);
-                            layoutParams.width = DisplayUtil.dpToPx(82);
-                        } else {
-                            mPreview.setTextColor(Color.parseColor("#7E7E7E"));
-                            mComplete.setText(R.string.complete_name);
-                            mComplete.setTextColor(Color.parseColor("#6d6d6d"));
-                            mComplete.setBackgroundResource(R.drawable.complete_disable);
-                            layoutParams.width = DisplayUtil.dpToPx(62);
-                        }
-                        mComplete.setLayoutParams(layoutParams);
 
+                        update(count);
 
                     }
 
@@ -153,28 +138,56 @@ public class PhotoPickerActivity extends AppCompatActivity {
 
 
     public void intent(int position) {
-        LinkedList<PhotoEntity> allPic = photoAdapter.getList();
+        LinkedList<PhotoEntity> picList = photoAdapter.getList();
         Intent intent = new Intent(PhotoPickerActivity.this, PhotoPreviewActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("data", allPic);
+
         LinkedList<PhotoEntity> selectPic = new LinkedList<>();
+
+        int p = 0;
         for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
-            Integer key = integerPhotoEntityEntry.getKey();
+            Integer id = integerPhotoEntityEntry.getKey();
             PhotoEntity value = integerPhotoEntityEntry.getValue();
-            value.setPosition(key);
-            if (position == key) {
-                value.setSelect(true);
+            value.setId(id);
+
+            if (position >= 0) {
+                if (picList.get(position).getId() == id) {
+                    value.setSelect(true);
+                } else {
+                    value.setSelect(false);
+                }
             } else {
-                value.setSelect(false);
+                value.setSelect(p == 0);
             }
+            p++;
             selectPic.add(value);
         }
-
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("data", position != -1 ? picList : selectPic);
         bundle.putSerializable("selectData", selectPic);
         intent.putExtra("bundle", bundle);
-        intent.putExtra("position", position);
+        intent.putExtra("position", position != -1 ? position : 0);
         intent.putExtra("maxLen", mMaxLen);
         startActivityForResult(intent, 100);
+    }
+
+    private void update(int count) {
+
+        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mComplete.getLayoutParams();
+        if (count > 0) {
+            String tip = String.format(getResources().getString(R.string.complete), String.valueOf(count));
+            mComplete.setText(tip);
+            mComplete.setTextColor(Color.WHITE);
+            mComplete.setBackgroundResource(R.drawable.complete_enable);
+            mPreview.setTextColor(Color.WHITE);
+            layoutParams.width = DisplayUtil.dpToPx(82);
+        } else {
+            mPreview.setTextColor(Color.parseColor("#7E7E7E"));
+            mComplete.setText(R.string.complete_name);
+            mComplete.setTextColor(Color.parseColor("#6d6d6d"));
+            mComplete.setBackgroundResource(R.drawable.complete_disable);
+            layoutParams.width = DisplayUtil.dpToPx(62);
+        }
+        mComplete.setLayoutParams(layoutParams);
     }
 
     @Override
@@ -186,10 +199,11 @@ public class PhotoPickerActivity extends AppCompatActivity {
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
             HashMap<Integer, PhotoEntity> map = new LinkedHashMap<>();
             for (PhotoEntity selectDatum : selectData) {
-                map.put((int) selectDatum.getPosition(), selectDatum);
+                map.put(selectDatum.getId(), selectDatum);
             }
             photoAdapter.setMap(map);
             photoAdapter.notifyDataSetChanged();
+            update(map.size());
 
         }
     }
@@ -223,15 +237,30 @@ public class PhotoPickerActivity extends AppCompatActivity {
                     cover = value.get(0).getFilePath();
                 }
                 folderEntity = new FolderEntity();
-                folderEntity.setTitle(stringLinkedListEntry.getKey().replace(File.separator, ""));
+                folderEntity.setTitle(stringLinkedListEntry.getKey());
                 folderEntity.setCount(value.size());
                 folderEntity.setSelect(false);
                 folderEntity.setCover(cover);
                 list.add(folderEntity);
             }
+            final FolderPreviewAdapter folderPreviewAdapter = new FolderPreviewAdapter(list);
+            folderPreviewAdapter.setItemClick(new FolderPreviewAdapter.ItemClick() {
+                @Override
+                public void onItemClick(int position) {
+                    popupWindow.dismiss();
+                    FolderEntity f = folderPreviewAdapter.getList().get(position);
 
-            viewById.setAdapter(new FolderPreviewAdapter(list));
-
+                    mTitle.setText(f.getTitle());
+                    LinkedList<PhotoEntity> photoEntities = mResult.getHashMapPic().get(f.getTitle());
+                    if (ObjectUtils.isEmpty(photoEntities)) {
+                        photoEntities = mResult.getAllPic();
+                    }
+                    photoAdapter.setList(photoEntities);
+                    photoAdapter.notifyDataSetChanged();
+                    folderPreviewAdapter.updateSelect(position);
+                }
+            });
+            viewById.setAdapter(folderPreviewAdapter);
             popupWindow.setContentView(inflate);
             popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
             popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);

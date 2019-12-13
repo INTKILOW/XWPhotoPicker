@@ -9,14 +9,12 @@ public class PhotoEntity implements Serializable {
     private boolean isVideo = false;
     private int count = 1;
     private boolean canSelect = true;
-
-
+    private int id;
     private String filePath;
     private long size;
     private String mimeType;
     private String folder;
 
-    private long position;
 
     public String getFilePath() {
         return filePath;
@@ -36,6 +34,14 @@ public class PhotoEntity implements Serializable {
 
     public String getMimeType() {
         return mimeType;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setMimeType(String mimeType) {
@@ -94,11 +100,5 @@ public class PhotoEntity implements Serializable {
         this.count = count;
     }
 
-    public long getPosition() {
-        return position;
-    }
 
-    public void setPosition(long position) {
-        this.position = position;
-    }
 }

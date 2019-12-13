@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.entity.PhotoWrapperEntity;
@@ -74,6 +73,7 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                 //没有图片
                 return photoWrapperEntity;
             } else {
+                int id = 0;
                 while (cursor.moveToNext()) {
 
                     String imagePath = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
@@ -88,6 +88,7 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                         int index = parent.lastIndexOf(File.separator);
                         if (-1 != index) {
                             folder = parent.substring(index);
+                            folder = folder.replace(File.separator, "");
                         }
                     }
                     PhotoEntity photoEntity = new PhotoEntity();
@@ -95,9 +96,7 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                     photoEntity.setSize(size);
                     photoEntity.setFolder(folder);
                     photoEntity.setMimeType(mimeType);
-                    if (mimeType.equals("video/mp4")) {
-                        Log.e("TAG", "");
-                    }
+                    photoEntity.setId(id);
                     if (mHashMapPic.containsKey(folder)) {
                         LinkedList<PhotoEntity> photoEntities = mHashMapPic.get(folder);
                         if (null != photoEntities) {
@@ -114,6 +113,7 @@ public class PhotoLoadTask extends AsyncTask<Void, Void, PhotoWrapperEntity> {
                     }
 
                     mAllPic.add(photoEntity);
+                    id++;
 
                 }
 

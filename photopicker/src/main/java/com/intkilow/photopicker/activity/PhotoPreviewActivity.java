@@ -80,11 +80,15 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                     int index = countView.getCount() - 1;
                     list.remove(index);
                     mPhotoPreviewItemAdapter.notifyItemRemoved(index);
+                    if (index != list.size()) { // 如果移除的是最后一个，忽略
+                        mPhotoPreviewItemAdapter.notifyItemRangeChanged(index, list.size() - index);
+                    }
+
                     countView.setSelect(false, 0, true);
                 } else {
                     if (mMaxLen > list.size()) {
                         PhotoEntity photoEntity = mSamplePagerAdapter.getAllPic().get(viewPager.getCurrentItem());
-                        photoEntity.setPosition(viewPager.getCurrentItem());
+//                        photoEntity.setPosition(viewPager.getCurrentItem());
                         photoEntity.setSelect(true);
                         list.add(photoEntity);
                         mRecyclerView.smoothScrollToPosition(list.size());
@@ -111,7 +115,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             Bundle bundle = getIntent().getBundleExtra("bundle");
             int position = getIntent().getIntExtra("position", 0);
             mMaxLen = getIntent().getIntExtra("maxLen", 0);
-            List<PhotoEntity> allPic = (List<PhotoEntity>) bundle.getSerializable("data");
+            final List<PhotoEntity> allPic = (List<PhotoEntity>) bundle.getSerializable("data");
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
 
             if (!ObjectUtils.isEmpty(selectData)) {
@@ -127,7 +131,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             boolean select = false;
             int i = 1, p = 0;
             for (PhotoEntity selectDatum : selectData) {
-                if (selectDatum.isSelect() && selectDatum.getPosition() == position) {
+                if (selectDatum.isSelect()) {
                     select = true;
                     p = i;
                     break;
@@ -139,7 +143,16 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             mPhotoPreviewItemAdapter.setItemClick(new PhotoPreviewItemAdapter.ItemClick() {
                 @Override
                 public void onItemClick(int position) {
-                    viewPager.setCurrentItem((int) mPhotoPreviewItemAdapter.getList().get(position).getPosition(), false);
+                    int id = mPhotoPreviewItemAdapter.getList().get(position).getId();
+                    int i = 0;
+                    for (PhotoEntity photoEntity : allPic) {
+                        if (photoEntity.getId() == id) {
+                            viewPager.setCurrentItem(i, false);
+                            break;
+                        }
+                        i++;
+                    }
+
                 }
             });
             mRecyclerView.setAdapter(mPhotoPreviewItemAdapter);
@@ -159,7 +172,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                     int i = 0, p = -1;
                     boolean select = false;
                     for (PhotoEntity entity : list) {
-                        if (entity.getPosition() == position) {
+                        if (entity.getId() == mSamplePagerAdapter.getAllPic().get(position).getId()) {
                             select = true;
                             entity.setSelect(true);
                             p = i;

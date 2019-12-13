@@ -58,12 +58,12 @@ public class PhotoAdapter extends RecyclerView.Adapter {
 
         boolean select = false;
         int count = 1;
-        if (map.containsKey(position)) {
+        if (map.containsKey(photoEntity.getId())) {
             viewHolder.image.setEnableSelect(true);
             select = true;
             for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : map.entrySet()) {
 
-                if (integerPhotoEntityEntry.getKey() == position) {
+                if (integerPhotoEntityEntry.getKey() == photoEntity.getId()) {
                     photoEntity = integerPhotoEntityEntry.getValue();
                     break;
                 }
@@ -99,9 +99,9 @@ public class PhotoAdapter extends RecyclerView.Adapter {
                 PhotoEntity photoEntity = mList.get(position);
 
 
-                if (!map.containsKey(position)) {
+                if (!map.containsKey(photoEntity.getId())) {
                     isAddAction = true;
-                    map.put(position, photoEntity);
+                    map.put(photoEntity.getId(), photoEntity);
 
                     if (map.size() >= 9) {
                         canSelect = false;
