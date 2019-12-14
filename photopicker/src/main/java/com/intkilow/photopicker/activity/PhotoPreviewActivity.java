@@ -27,6 +27,7 @@ import com.intkilow.photopicker.view.CountView;
 import com.intkilow.photopicker.view.HackyViewPager;
 
 import java.io.Serializable;
+import java.util.LinkedList;
 import java.util.List;
 
 public class PhotoPreviewActivity extends AppCompatActivity {
@@ -63,6 +64,30 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.view_pager);
         mComplete = findViewById(R.id.complete);
         countView = findViewById(R.id.countView);
+        mComplete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<PhotoEntity> list = mPhotoPreviewItemAdapter.getList();
+                List<String> resultList = new LinkedList<>();
+                for (PhotoEntity photoEntity : list) {
+                    if (!photoEntity.isDelete()) {
+                        resultList.add(photoEntity.getFilePath());
+                    }
+                }
+                if (resultList.size() <= 0) {
+                    resultList.add(mSamplePagerAdapter.getAllPic().get(viewPager.getCurrentItem()).getFilePath());
+                }
+                Intent intent = new Intent();
+                Bundle bundle = new Bundle();
+                intent.putExtra("complete", true);
+                bundle.putSerializable("resultData", (Serializable) resultList);
+                intent.putExtra("bundle", bundle);
+                setResult(100, intent);
+                finish();
+
+
+            }
+        });
 
         findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,7 +98,6 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         countView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 boolean isSelect = countView.isIsSelect();
                 List<PhotoEntity> list = mPhotoPreviewItemAdapter.getList();
                 int index = countView.getCount() - 1;
@@ -81,16 +105,28 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 if (isSelect) {
                     if (!preview) {
                         //当前选中 取消选择当前
-
                         list.remove(index);
                         mPhotoPreviewItemAdapter.notifyItemRemoved(index);
                         if (index != list.size()) { // 如果移除的是最后一个，忽略
                             mPhotoPreviewItemAdapter.notifyItemRangeChanged(index, list.size() - index);
                         }
+                        size = list.size();
                     } else {
-                        list.get(index).setSelect(false);
-                        list.get(index).setDelete(true);
-                        mPhotoPreviewItemAdapter.notifyItemChanged(index);
+                        int i = 0, g = 0;
+                        for (PhotoEntity photoEntity : list) {
+                            int p = viewPager.getCurrentItem();
+                            if (photoEntity.getId() == mSamplePagerAdapter.getAllPic().get(p).getId()) {
+                                g = i;
+                            }
+                            if (!photoEntity.isDelete()) {
+                                size++;
+                            }
+                            i++;
+                        }
+                        list.get(g).setSelect(false);
+                        list.get(g).setDelete(true);
+                        mPhotoPreviewItemAdapter.notifyItemChanged(g);
+                        size = size - 1;
                     }
 
                     countView.setSelect(false, size, true);

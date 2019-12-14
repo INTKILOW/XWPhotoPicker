@@ -30,6 +30,7 @@ import com.intkilow.photopicker.entity.FolderEntity;
 import com.intkilow.photopicker.entity.PhotoEntity;
 import com.intkilow.photopicker.entity.PhotoWrapperEntity;
 import com.intkilow.photopicker.interfaces.Callback;
+import com.intkilow.photopicker.interfaces.ChooseImageDelegate;
 import com.intkilow.photopicker.utils.DisplayUtil;
 import com.intkilow.photopicker.utils.ObjectUtils;
 import com.intkilow.photopicker.utils.SpaceItemDecoration;
@@ -51,8 +52,10 @@ public class PhotoPickerActivity extends AppCompatActivity {
     private ConstraintLayout banner;
     private LinearLayout chooseFolder;
     private PopupWindow popupWindow;
-
     private ImageView mDropImageView;
+
+    public static ChooseImageDelegate mChooseImageDelegate;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,14 +69,20 @@ public class PhotoPickerActivity extends AppCompatActivity {
         mPreview = findViewById(R.id.preview);
         mTitle = findViewById(R.id.title);
         mDropImageView = findViewById(R.id.drop_image_view);
+        mComplete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (photoAdapter.getMap().size() > 0) {
+                    setActivityResult();
+                }
+            }
+        });
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (photoAdapter.getMap().size() > 0) {
-                    for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
                         intent(-1);
-                        break;
-                    }
+
                 }
 
             }
@@ -184,7 +193,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
         } else {
             mPreview.setTextColor(Color.parseColor("#7E7E7E"));
             mComplete.setText(R.string.complete_name);
-            mComplete.setTextColor(Color.parseColor("#6d6d6d"));
+            mComplete.setTextColor(Color.parseColor("#7E7E7E"));
             mComplete.setBackgroundResource(R.drawable.complete_disable);
             layoutParams.width = DisplayUtil.dpToPx(62);
         }
@@ -195,8 +204,19 @@ public class PhotoPickerActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+
         if (requestCode == 100 && null != data) {
+            boolean complete = data.getBooleanExtra("complete", false);
             Bundle bundle = data.getBundleExtra("bundle");
+            if (complete) {
+                List<String> list = (List<String>) bundle.getSerializable("resultData");
+                if (null != mChooseImageDelegate) {
+                    mChooseImageDelegate.chooseResult(list);
+                }
+                finish();
+                return;
+            }
+
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
             HashMap<Integer, PhotoEntity> map = new LinkedHashMap<>();
             for (PhotoEntity selectDatum : selectData) {
@@ -302,5 +322,28 @@ public class PhotoPickerActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mChooseImageDelegate = null;
+    }
 
+    private void setActivityResult() {
+        List<String> list = new LinkedList<>();
+        for (Map.Entry<Integer, PhotoEntity> integerPhotoEntityEntry : photoAdapter.getMap().entrySet()) {
+            list.add(integerPhotoEntityEntry.getValue().getFilePath());
+        }
+        if (null != mChooseImageDelegate) {
+            mChooseImageDelegate.chooseResult(list);
+        }
+        finish();
+    }
+
+    public static ChooseImageDelegate getChooseImageDelegate() {
+        return mChooseImageDelegate;
+    }
+
+    public static void setChooseImageDelegate(ChooseImageDelegate mChooseImageDelegate) {
+        PhotoPickerActivity.mChooseImageDelegate = mChooseImageDelegate;
+    }
 }
