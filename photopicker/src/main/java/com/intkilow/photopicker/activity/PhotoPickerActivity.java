@@ -167,6 +167,7 @@ public class PhotoPickerActivity extends AppCompatActivity {
         intent.putExtra("bundle", bundle);
         intent.putExtra("position", position != -1 ? position : 0);
         intent.putExtra("maxLen", mMaxLen);
+        intent.putExtra("preview", position == -1);
         startActivityForResult(intent, 100);
     }
 
@@ -199,7 +200,9 @@ public class PhotoPickerActivity extends AppCompatActivity {
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
             HashMap<Integer, PhotoEntity> map = new LinkedHashMap<>();
             for (PhotoEntity selectDatum : selectData) {
-                map.put(selectDatum.getId(), selectDatum);
+                if (!selectDatum.isDelete()) {
+                    map.put(selectDatum.getId(), selectDatum);
+                }
             }
             photoAdapter.setMap(map);
             photoAdapter.notifyDataSetChanged();

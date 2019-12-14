@@ -53,6 +53,8 @@ public class PhotoPreviewItemAdapter extends RecyclerView.Adapter {
 
 
         viewHolder.image.setSelect(photoEntity.isSelect());
+        viewHolder.image.setDelete(photoEntity.isDelete());
+        viewHolder.image.updateUI();
         viewHolder.image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

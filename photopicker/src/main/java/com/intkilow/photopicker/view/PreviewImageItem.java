@@ -14,7 +14,7 @@ import com.intkilow.photopicker.utils.DisplayUtil;
 public class PreviewImageItem extends AppCompatImageView {
     private Paint paint = new Paint();
     private boolean select = false;
-
+    private boolean delete = false;
     public PreviewImageItem(Context context) {
         super(context);
         init();
@@ -37,11 +37,25 @@ public class PreviewImageItem extends AppCompatImageView {
         if (select) {
             canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
         }
+
+        if (delete && !select) {
+            canvas.drawARGB(160, 255, 255, 255);//不能选择的白色透明度
+        }
+    }
+
+    public void setDelete(boolean delete) {
+        this.delete = delete;
+
     }
 
     public void setSelect(boolean select) {
         this.select = select;
-        invalidate();
 
     }
+
+    public void updateUI() {
+        invalidate();
+    }
+
+
 }

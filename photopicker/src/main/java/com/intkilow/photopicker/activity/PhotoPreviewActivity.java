@@ -49,6 +49,8 @@ public class PhotoPreviewActivity extends AppCompatActivity {
 
     private int mMaxLen = 9;
 
+    private boolean preview = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,26 +76,55 @@ public class PhotoPreviewActivity extends AppCompatActivity {
 
                 boolean isSelect = countView.isIsSelect();
                 List<PhotoEntity> list = mPhotoPreviewItemAdapter.getList();
+                int index = countView.getCount() - 1;
+                int size = 0;
                 if (isSelect) {
-                    //当前选中 取消选择当前
+                    if (!preview) {
+                        //当前选中 取消选择当前
 
-                    int index = countView.getCount() - 1;
-                    list.remove(index);
-                    mPhotoPreviewItemAdapter.notifyItemRemoved(index);
-                    if (index != list.size()) { // 如果移除的是最后一个，忽略
-                        mPhotoPreviewItemAdapter.notifyItemRangeChanged(index, list.size() - index);
+                        list.remove(index);
+                        mPhotoPreviewItemAdapter.notifyItemRemoved(index);
+                        if (index != list.size()) { // 如果移除的是最后一个，忽略
+                            mPhotoPreviewItemAdapter.notifyItemRangeChanged(index, list.size() - index);
+                        }
+                    } else {
+                        list.get(index).setSelect(false);
+                        list.get(index).setDelete(true);
+                        mPhotoPreviewItemAdapter.notifyItemChanged(index);
                     }
 
-                    countView.setSelect(false, 0, true);
+                    countView.setSelect(false, size, true);
                 } else {
                     if (mMaxLen > list.size()) {
-                        PhotoEntity photoEntity = mSamplePagerAdapter.getAllPic().get(viewPager.getCurrentItem());
-//                        photoEntity.setPosition(viewPager.getCurrentItem());
-                        photoEntity.setSelect(true);
-                        list.add(photoEntity);
-                        mRecyclerView.smoothScrollToPosition(list.size());
-                        mPhotoPreviewItemAdapter.notifyItemInserted(list.size());
-                        countView.setSelect(true, list.size(), true);
+
+                        if (!preview) {
+                            PhotoEntity photoEntity = mSamplePagerAdapter.getAllPic().get(viewPager.getCurrentItem());
+
+                            photoEntity.setSelect(true);
+                            photoEntity.setDelete(false);
+                            list.add(photoEntity);
+                            mRecyclerView.smoothScrollToPosition(list.size());
+                            mPhotoPreviewItemAdapter.notifyItemInserted(list.size());
+                        } else {
+                            int i = 0;
+                            for (PhotoEntity photoEntity : list) {
+                                int p = viewPager.getCurrentItem();
+                                if (photoEntity.getId() == mSamplePagerAdapter.getAllPic().get(p).getId()) {
+                                    break;
+                                }
+                                i++;
+                            }
+                            list.get(i).setSelect(true);
+                            list.get(i).setDelete(false);
+                            mPhotoPreviewItemAdapter.notifyItemChanged(i);
+                        }
+
+                        for (PhotoEntity photoEntity : list) {
+                            if (!photoEntity.isDelete()) {
+                                size++;
+                            }
+                        }
+                        countView.setSelect(true, size, true);
                     }
                 }
 
@@ -103,7 +134,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                     mRecyclerView.setVisibility(View.GONE);
                 }
 
-                setCompleteWH(mComplete, list.size());
+                setCompleteWH(mComplete, size);
             }
         });
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -115,6 +146,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             Bundle bundle = getIntent().getBundleExtra("bundle");
             int position = getIntent().getIntExtra("position", 0);
             mMaxLen = getIntent().getIntExtra("maxLen", 0);
+            preview = getIntent().getBooleanExtra("preview", false);
             final List<PhotoEntity> allPic = (List<PhotoEntity>) bundle.getSerializable("data");
             List<PhotoEntity> selectData = (List<PhotoEntity>) bundle.getSerializable("selectData");
 
@@ -169,10 +201,10 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 public void onPageSelected(int position) {
                     mPreviewText.setText((position + 1) + "/" + mAllSize);
                     List<PhotoEntity> list = mPhotoPreviewItemAdapter.getList();
-                    int i = 0, p = -1;
+                    int i = 0, p = -1, size = 0;
                     boolean select = false;
                     for (PhotoEntity entity : list) {
-                        if (entity.getId() == mSamplePagerAdapter.getAllPic().get(position).getId()) {
+                        if (entity.getId() == mSamplePagerAdapter.getAllPic().get(position).getId() && !entity.isDelete()) {
                             select = true;
                             entity.setSelect(true);
                             p = i;
@@ -181,11 +213,19 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                             entity.setSelect(false);
                         }
                         i++;
+                        if (!entity.isDelete()) {
+                            size++;
+                        }
                     }
                     if (p >= 0) {
                         mRecyclerView.smoothScrollToPosition(p);
                     }
-                    countView.setSelect(select, p + 1, true);
+                    if (preview) {
+                        countView.setSelect(select, size, true);
+                    } else {
+                        countView.setSelect(select, p + 1, true);
+                    }
+
                     mPhotoPreviewItemAdapter.notifyDataSetChanged();
                 }
 

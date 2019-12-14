@@ -14,7 +14,7 @@ public class PhotoEntity implements Serializable {
     private long size;
     private String mimeType;
     private String folder;
-
+    private boolean delete = false;
 
     public String getFilePath() {
         return filePath;
@@ -38,6 +38,14 @@ public class PhotoEntity implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public boolean isDelete() {
+        return delete;
+    }
+
+    public void setDelete(boolean delete) {
+        this.delete = delete;
     }
 
     public void setId(int id) {
