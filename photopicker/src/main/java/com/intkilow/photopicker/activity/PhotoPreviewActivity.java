@@ -237,14 +237,14 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 public void onPageSelected(int position) {
                     mPreviewText.setText((position + 1) + "/" + mAllSize);
                     List<PhotoEntity> list = mPhotoPreviewItemAdapter.getList();
-                    int i = 0, p = -1, size = 0;
+                    int i = 0, p = -1, size = 0, m = 0;
                     boolean select = false;
                     for (PhotoEntity entity : list) {
                         if (entity.getId() == mSamplePagerAdapter.getAllPic().get(position).getId() && !entity.isDelete()) {
                             select = true;
                             entity.setSelect(true);
                             p = i;
-
+                            m = size;
                         } else {
                             entity.setSelect(false);
                         }
@@ -257,7 +257,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                         mRecyclerView.smoothScrollToPosition(p);
                     }
                     if (preview) {
-                        countView.setSelect(select, size, true);
+                        countView.setSelect(select, m + 1, true);
                     } else {
                         countView.setSelect(select, p + 1, true);
                     }
